@@ -16,9 +16,41 @@ int _putchar(char c)
 }
 
 /**
+ * _print_int - prints an integer character by character
+ * @n: the integer to print
+ *
+ * Return: number of characters printed
+ */
+int _print_int(int n)
+{
+    unsigned int m, digit, length = 0;
+
+    if (n < 0)
+    {
+        _putchar('-');
+        length++;
+        m = -n;
+    }
+    else
+    {
+        m = n;
+    }
+
+    digit = m / 10;
+    if (digit > 0)
+    {
+        length += _print_int(digit);
+    }
+    _putchar((m % 10) + '0');
+    length++;
+
+    return (length);
+}
+
+/**
  * _printf - A simplified printf function
  * @format: format string (see man 3 printf)
- * 
+ *
  * Return: number of characters printed
  */
 int _printf(const char *format, ...)
@@ -54,6 +86,10 @@ int _printf(const char *format, ...)
             case '%': /* literal '%' */
                 _putchar('%');
                 count++;
+                break;
+            case 'd': /* decimal (base 10) */
+            case 'i': /* integer (base 10) */
+                count += _print_int(va_arg(args, int));
                 break;
             default:
                 /* If the character isn't one we know, ignore it */
