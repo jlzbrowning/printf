@@ -64,9 +64,10 @@ int _print_octal(unsigned int n)
     return (length);
 }
 
-int _print_hex(unsigned int n, int upper_case)
+int _print_hex(unsigned long int n, int upper_case)
 {
-    unsigned int digit, length = 0;
+    unsigned long int digit;
+    int length = 0;
     char symbols[] = "0123456789abcdef";
     char upper_symbols[] = "0123456789ABCDEF";
 
@@ -111,6 +112,18 @@ int _print_S(char *str)
     return (count);
 }
 
+int _print_pointer(void *ptr)
+{
+    unsigned long int addr = (unsigned long int)ptr;
+    int count;
+
+    _putchar('0');
+    _putchar('x');
+    count = _print_hex(addr, 0);
+
+    return (count + 2);
+}
+
 int _printf(const char *format, ...)
 {
     va_list args;
@@ -141,7 +154,7 @@ int _printf(const char *format, ...)
                     count++;
                 }
                 break;
-            case 'S': /* Custom conversion specifier 'S' */
+            case 'S': /* string with non-printable characters in \xHH format */
                 count += _print_S(va_arg(args, char *));
                 break;
             case '%': /* literal '%' */
@@ -163,6 +176,9 @@ int _printf(const char *format, ...)
                 break;
             case 'X': /* hexadecimal (upper case) */
                 count += _print_hex(va_arg(args, unsigned int), 1);
+                break;
+            case 'p': /* pointer */
+                count += _print_pointer(va_arg(args, void *));
                 break;
             default:
                 /* If the character isn't one we know, ignore it */
