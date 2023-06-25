@@ -1,37 +1,21 @@
 #ifndef MAIN_H
 #define MAIN_H
-
 #include <stdarg.h>
 #include <unistd.h>
 
-#define BUFF_SIZE 1024
-
-typedef struct buffer
+int _putchar(char c)
 {
-    char buff[BUFF_SIZE];
-    int len;
-} buffer_t;
-
-void flush_buff(buffer_t *b)
-{
-    write(1, b->buff, b->len);
-    b->len = 0;
+    return (write(1, &c, 1));
 }
 
-void add_to_buff(buffer_t *b, char c)
+int _print_int(int n)
 {
-    if (b->len == BUFF_SIZE)
-        flush_buff(b);
-    b->buff[b->len++] = c;
-}
-
-void _print_int(buffer_t *b, int n)
-{
-    unsigned int m, digit;
+    unsigned int m, digit, length = 0;
 
     if (n < 0)
     {
-        add_to_buff(b, '-');
+        _putchar('-');
+        length++;
         m = -n;
     }
     else
@@ -42,58 +26,97 @@ void _print_int(buffer_t *b, int n)
     digit = m / 10;
     if (digit > 0)
     {
-        _print_int(b, digit);
+        length += _print_int(digit);
     }
-    add_to_buff(b, (m % 10) + '0');
+    _putchar((m % 10) + '0');
+    length++;
+
+    return (length);
 }
 
-void _print_uint(buffer_t *b, unsigned int n)
+int _print_uint(unsigned int n)
 {
-    unsigned int digit;
+    unsigned int digit, length = 0;
 
     digit = n / 10;
     if (digit > 0)
     {
-        _print_uint(b, digit);
+        length += _print_uint(digit);
     }
-    add_to_buff(b, (n % 10) + '0');
+    _putchar((n % 10) + '0');
+    length++;
+
+    return (length);
 }
 
-void _print_octal(buffer_t *b, unsigned int n)
+int _print_octal(unsigned int n)
 {
-    unsigned int digit;
+    unsigned int digit, length = 0;
 
     digit = n / 8;
     if (digit > 0)
     {
-        _print_octal(b, digit);
+        length += _print_octal(digit);
     }
-    add_to_buff(b, (n % 8) + '0');
+    _putchar((n % 8) + '0');
+    length++;
+
+    return (length);
 }
 
-void _print_hex(buffer_t *b, unsigned int n, int upper_case)
+int _print_hex(unsigned int n, int upper_case)
 {
-    unsigned int digit;
+    unsigned int digit, length = 0;
     char symbols[] = "0123456789abcdef";
     char upper_symbols[] = "0123456789ABCDEF";
 
     digit = n / 16;
     if (digit > 0)
     {
-        _print_hex(b, digit, upper_case);
+        length += _print_hex(digit, upper_case);
     }
 
     if (upper_case)
-        add_to_buff(b, upper_symbols[n % 16]);
+        _putchar(upper_symbols[n % 16]);
     else
-        add_to_buff(b, symbols[n % 16]);
+        _putchar(symbols[n % 16]);
+    length++;
+
+    return (length);
 }
 
-void _printf(const char *format, ...)
+int _print_S(char *str)
+{
+    int count = 0;
+
+    while (*str)
+    {
+        if ((*str >= 0 && *str < 32) || *str >= 127)
+        {
+            _putchar('\\');
+            _putchar('x');
+            count += 2;
+            if (*str < 16)
+                _putchar('0');
+            count += _print_hex(*str, 1);
+        }
+        else
+        {
+            _putchar(*str);
+            count++;
+        }
+        str++;
+    }
+
+    return (count);
+}
+
+int _printf(const char *format, ...)
 {
     va_list args;
-    buffer_t b = {{0}, 0};
+    int count = 0;
     int i;
+    char *str;
 
     va_start(args, format);
 
@@ -107,31 +130,39 @@ void _printf(const char *format, ...)
             switch (format[i])
             {
             case 'c': /* char */
-                add_to_buff(&b, va_arg(args, int));
+                _putchar(va_arg(args, int));
+                count++;
                 break;
             case 's': /* string */
-                char *str = va_arg(args, char*);
+                str = va_arg(args, char*);
                 while (*str)
-                    add_to_buff(&b, *str++);
+                {
+                    _putchar(*str++);
+                    count++;
+                }
+                break;
+            case 'S': /* Custom conversion specifier 'S' */
+                count += _print_S(va_arg(args, char *));
                 break;
             case '%': /* literal '%' */
-                add_to_buff(&b, '%');
+                _putchar('%');
+                count++;
                 break;
             case 'd': /* decimal (base 10) */
             case 'i': /* integer (base 10) */
-                _print_int(&b, va_arg(args, int));
+                count += _print_int(va_arg(args, int));
                 break;
             case 'u': /* unsigned int */
-                _print_uint(&b, va_arg(args, unsigned int));
+                count += _print_uint(va_arg(args, unsigned int));
                 break;
             case 'o': /* octal */
-                _print_octal(&b, va_arg(args, unsigned int));
+                count += _print_octal(va_arg(args, unsigned int));
                 break;
-            case 'x': /* hexadecimal (lower case) */
-                _print_hex(&b, va_arg(args, unsigned int), 0);
+            case 'x': /* hexadecimal */
+                count += _print_hex(va_arg(args, unsigned int), 0);
                 break;
             case 'X': /* hexadecimal (upper case) */
-                _print_hex(&b, va_arg(args, unsigned int), 1);
+                count += _print_hex(va_arg(args, unsigned int), 1);
                 break;
             default:
                 /* If the character isn't one we know, ignore it */
@@ -139,10 +170,14 @@ void _printf(const char *format, ...)
             }
         }
         else /* if it's not a '%', just print the character */
-            add_to_buff(&b, format[i]);
+        {
+            _putchar(format[i]);
+            count++;
+        }
     }
 
-    flush_buff(&b);
     va_end(args);
+
+    return (count);
 }
 #endif
