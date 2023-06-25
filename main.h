@@ -8,9 +8,9 @@ int _putchar(char c)
     return (write(1, &c, 1));
 }
 
-int _print_int(int n, int plus_flag, int space_flag)
+int _print_int(long int n, int plus_flag, int space_flag)
 {
-    unsigned int m, digit, length = 0;
+    unsigned long int m, digit, length = 0;
 
     if (n < 0)
     {
@@ -44,9 +44,9 @@ int _print_int(int n, int plus_flag, int space_flag)
     return (length);
 }
 
-int _print_uint(unsigned int n, int hash_flag)
+int _print_uint(unsigned long int n, int hash_flag)
 {
-    unsigned int digit, length = 0;
+    unsigned long int digit, length = 0;
 
     if (hash_flag)
     {
@@ -65,9 +65,9 @@ int _print_uint(unsigned int n, int hash_flag)
     return (length);
 }
 
-int _print_octal(unsigned int n, int hash_flag)
+int _print_octal(unsigned long int n, int hash_flag)
 {
-    unsigned int digit, length = 0;
+    unsigned long int digit, length = 0;
 
     digit = n / 8;
     if (digit > 0)
@@ -146,16 +146,16 @@ int _printf(const char *format, ...)
     int i;
     char *str;
     int plus_flag = 0, space_flag = 0, hash_flag = 0;
+    int length_l = 0, length_h = 0;
 
     va_start(args, format);
 
     for (i = 0; format[i] != '\0'; i++)
     {
-        if (format[i] == '%') /* this means a specifier is coming */
+        if (format[i] == '%')
         {
-            i++; /* skip the '%' */
+            i++;
 
-            /* check for flag characters */
             while (format[i] == '+' || format[i] == ' ' || format[i] == '#')
             {
                 if (format[i] == '+')
@@ -167,14 +167,22 @@ int _printf(const char *format, ...)
                 i++;
             }
 
-            /* Now we check for our known specifiers */
+            while (format[i] == 'l' || format[i] == 'h')
+            {
+                if (format[i] == 'l')
+                    length_l = 1;
+                else if (format[i] == 'h')
+                    length_h = 1;
+                i++;
+            }
+
             switch (format[i])
             {
-            case 'c': /* char */
+            case 'c':
                 _putchar(va_arg(args, int));
                 count++;
                 break;
-            case 's': /* string */
+            case 's':
                 str = va_arg(args, char*);
                 while (*str)
                 {
@@ -182,39 +190,65 @@ int _printf(const char *format, ...)
                     count++;
                 }
                 break;
-            case 'S': /* string with non-printable characters in \xHH format */
+            case 'S':
                 count += _print_S(va_arg(args, char *));
                 break;
-            case '%': /* literal '%' */
+            case '%':
                 _putchar('%');
                 count++;
                 break;
-            case 'd': /* decimal (base 10) */
-            case 'i': /* integer (base 10) */
-                count += _print_int(va_arg(args, int), plus_flag, space_flag);
+            case 'd':
+            case 'i':
+                if (length_l)
+                    count += _print_int(va_arg(args, long int), plus_flag, space_flag);
+                else if (length_h)
+                    count += _print_int(va_arg(args, int), plus_flag, space_flag);
+                else
+                    count += _print_int(va_arg(args, int), plus_flag, space_flag);
                 break;
-            case 'u': /* unsigned int */
-                count += _print_uint(va_arg(args, unsigned int), hash_flag);
+            case 'u':
+                if (length_l)
+                    count += _print_uint(va_arg(args, unsigned long int), hash_flag);
+                else if (length_h)
+                    count += _print_uint(va_arg(args, unsigned int), hash_flag);
+                else
+                    count += _print_uint(va_arg(args, unsigned int), hash_flag);
                 break;
-            case 'o': /* octal */
-                count += _print_octal(va_arg(args, unsigned int), hash_flag);
+            case 'o':
+                if (length_l)
+                    count += _print_octal(va_arg(args, unsigned long int), hash_flag);
+                else if (length_h)
+                    count += _print_octal(va_arg(args, unsigned int), hash_flag);
+                else
+                    count += _print_octal(va_arg(args, unsigned int), hash_flag);
                 break;
-            case 'x': /* hexadecimal */
-                count += _print_hex(va_arg(args, unsigned int), 0, hash_flag);
+            case 'x':
+                if (length_l)
+                    count += _print_hex(va_arg(args, unsigned long int), 0, hash_flag);
+                else if (length_h)
+                    count += _print_hex(va_arg(args, unsigned int), 0, hash_flag);
+                else
+                    count += _print_hex(va_arg(args, unsigned int), 0, hash_flag);
                 break;
-            case 'X': /* hexadecimal (upper case) */
-                count += _print_hex(va_arg(args, unsigned int), 1, hash_flag);
+            case 'X':
+                if (length_l)
+                    count += _print_hex(va_arg(args, unsigned long int), 1, hash_flag);
+                else if (length_h)
+                    count += _print_hex(va_arg(args, unsigned int), 1, hash_flag);
+                else
+                    count += _print_hex(va_arg(args, unsigned int), 1, hash_flag);
                 break;
             default:
-                /* If the character isn't one we know, ignore it */
                 break;
             }
 
             plus_flag = 0;
             space_flag = 0;
             hash_flag = 0;
+            length_l = 0;
+            length_h = 0;
         }
-        else /* if it's not a '%', just print the character */
+        else
         {
             _putchar(format[i]);
             count++;
