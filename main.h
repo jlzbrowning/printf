@@ -48,6 +48,27 @@ int _print_int(int n)
 }
 
 /**
+ * _print_bin - prints an unsigned int in binary
+ * @n: the number to print
+ *
+ * Return: number of characters printed
+ */
+int _print_bin(unsigned int n)
+{
+    unsigned int digit, length = 0;
+
+    digit = n / 2;
+    if (digit > 0)
+    {
+        length += _print_bin(digit);
+    }
+    _putchar((n % 2) + '0');
+    length++;
+
+    return (length);
+}
+
+/**
  * _printf - A simplified printf function
  * @format: format string (see man 3 printf)
  *
@@ -90,6 +111,9 @@ int _printf(const char *format, ...)
             case 'd': /* decimal (base 10) */
             case 'i': /* integer (base 10) */
                 count += _print_int(va_arg(args, int));
+                break;
+            case 'b': /* binary */
+                count += _print_bin(va_arg(args, unsigned int));
                 break;
             default:
                 /* If the character isn't one we know, ignore it */
