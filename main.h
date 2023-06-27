@@ -3,59 +3,39 @@
 #include <stdarg.h>
 #include <unistd.h>
 
-#define BUFFER_SIZE 1024
-
-int _putchar(char c);
-int _print_int(long int n, int plus_flag, int space_flag);
-int _print_uint(unsigned long int n, int hash_flag);
-int _print_octal(unsigned long int n, int hash_flag);
-int _print_hex(unsigned long int n, int upper_case, int hash_flag);
-int _print_pointer(unsigned long int n);
-int _print_S(char *str);
-int _printf(const char *format, ...);
-
 int _putchar(char c)
 {
-    static char buffer[BUFFER_SIZE];
-    static int i;
-
-    if (c == -1 || i >= BUFFER_SIZE)
-    {
-        write(1, buffer, i);
-        i = 0;
-    }
-
-    if (c != -1)
-    {
-        buffer[i] = c;
-        i++;
-    }
-
-    return (1);
+    return (write(1, &c, 1));
 }
 
-int _print_int(long int n, int plus_flag, int space_flag)
+int _print_int(int n, int plus_flag, int space_flag)
 {
-    unsigned long int m, digit, length = 0;
-    int sign_flag = n < 0;
+    unsigned int m, digit, length = 0;
 
     if (n < 0)
+    {
+        _putchar('-');
+        length++;
         m = -n;
+    }
     else
+    {
         m = n;
+        if (plus_flag)
+        {
+            _putchar('+');
+            length++;
+        }
+        else if (space_flag)
+        {
+            _putchar(' ');
+            length++;
+        }
+    }
 
     digit = m / 10;
     if (digit > 0)
-        length += _print_int(digit, plus_flag, space_flag);
-
-    if (length == 0 && plus_flag && !sign_flag)
-        _putchar('+');
-
-    if (length == 0 && space_flag && !sign_flag && !plus_flag)
-        _putchar(' ');
-
-    if (sign_flag && length == 0)
-        _putchar('-');
+        length += _print_int(digit, 0, 0);
 
     _putchar((m % 10) + '0');
     length++;
@@ -63,16 +43,19 @@ int _print_int(long int n, int plus_flag, int space_flag)
     return (length);
 }
 
-int _print_uint(unsigned long int n, int hash_flag)
+int _print_uint(unsigned int n, int hash_flag)
 {
-    unsigned long int digit, length = 0;
+    unsigned int digit, length = 0;
 
-    if (hash_flag && length == 0)
+    if (hash_flag)
+    {
         _putchar('0');
+        length++;
+    }
 
     digit = n / 10;
     if (digit > 0)
-        length += _print_uint(digit, hash_flag);
+        length += _print_uint(digit, 0);
 
     _putchar((n % 10) + '0');
     length++;
@@ -80,16 +63,19 @@ int _print_uint(unsigned long int n, int hash_flag)
     return (length);
 }
 
-int _print_octal(unsigned long int n, int hash_flag)
+int _print_octal(unsigned int n, int hash_flag)
 {
-    unsigned long int digit, length = 0;
+    unsigned int digit, length = 0;
 
-    if (hash_flag && length == 0)
+    if (hash_flag)
+    {
         _putchar('0');
+        length++;
+    }
 
     digit = n / 8;
     if (digit > 0)
-        length += _print_octal(digit, hash_flag);
+        length += _print_octal(digit, 0);
 
     _putchar((n % 8) + '0');
     length++;
@@ -97,46 +83,22 @@ int _print_octal(unsigned long int n, int hash_flag)
     return (length);
 }
 
-int _print_hex(unsigned long int n, int upper_case, int hash_flag)
+int _print_hex(unsigned int n, int upper_case, int hash_flag)
 {
-    unsigned long int digit, length = 0;
-    char symbols[] = "0123456789abcdef";
-    char upper_symbols[] = "0123456789ABCDEF";
+    unsigned int digit, length = 0;
 
-    if (hash_flag && length == 0)
+    if (hash_flag)
     {
         _putchar('0');
         _putchar(upper_case ? 'X' : 'x');
+        length += 2;
     }
 
     digit = n / 16;
     if (digit > 0)
-        length += _print_hex(digit, upper_case, hash_flag);
+        length += _print_hex(digit, upper_case, 0);
 
-    if (upper_case)
-        _putchar(upper_symbols[n % 16]);
-    else
-        _putchar(symbols[n % 16]);
-    length++;
-
-    return (length);
-}
-
-int _print_pointer(unsigned long int n)
-{
-    unsigned long int digit, length = 0;
-
-    if (length == 0)
-    {
-        _putchar('0');
-        _putchar('x');
-    }
-
-    digit = n / 16;
-    if (digit > 0)
-        length += _print_hex(digit, 0, 0);
-
-    _putchar("0123456789abcdef"[n % 16]);
+    _putchar(upper_case ? "0123456789ABCDEF"[n % 16] : "0123456789abcdef"[n % 16]);
     length++;
 
     return (length);
@@ -175,7 +137,7 @@ int _printf(const char *format, ...)
     char *str;
     int plus_flag = 0, space_flag = 0, hash_flag = 0;
     int length_l = 0, length_h = 0;
-    int field_width = 0, width;
+    int field_width = 0, precision = -1, width;
 
     va_start(args, format);
 
@@ -185,59 +147,45 @@ int _printf(const char *format, ...)
         {
             i++;
 
+            while (format[i] == '+' || format[i] == ' ' || format[i] == '#')
+            {
+                plus_flag |= format[i] == '+';
+                space_flag |= format[i] == ' ';
+                hash_flag |= format[i] == '#';
+                i++;
+            }
+
             while (format[i] >= '0' && format[i] <= '9')
             {
-                field_width = field_width * 10 + (format[i] - '0');
+                field_width = field_width * 10 + format[i] - '0';
                 i++;
             }
 
-            if (format[i] == '+')
+            if (format[i] == '.')
             {
-                plus_flag = 1;
                 i++;
-            }
-            else if (format[i] == ' ')
-            {
-                space_flag = 1;
-                i++;
-            }
-            else if (format[i] == '#')
-            {
-                hash_flag = 1;
-                i++;
-            }
-
-            if (format[i] == 'l')
-            {
-                length_l = 1;
-                i++;
-            }
-            else if (format[i] == 'h')
-            {
-                length_h = 1;
-                i++;
+                precision = 0;
+                while (format[i] >= '0' && format[i] <= '9')
+                {
+                    precision = precision * 10 + format[i] - '0';
+                    i++;
+                }
             }
 
             switch (format[i])
             {
             case 'c':
-                width = 1;
-                while (width++ < field_width)
-                    _putchar(' ');
                 _putchar(va_arg(args, int));
-                count += field_width;
+                count++;
                 break;
             case 's':
-                str = va_arg(args, char*);
-                while (*str)
+                str = va_arg(args, char *);
+                width = 0;
+                while (*str && width < precision)
                 {
                     _putchar(*str++);
                     count++;
-                }
-                while (count < field_width)
-                {
-                    _putchar(' ');
-                    count++;
+                    width++;
                 }
                 break;
             case '%':
@@ -247,63 +195,26 @@ int _printf(const char *format, ...)
             case 'd':
             case 'i':
                 count += _print_int(va_arg(args, int), plus_flag, space_flag);
-                while (count < field_width)
-                {
-                    _putchar(' ');
-                    count++;
-                }
                 break;
             case 'u':
                 count += _print_uint(va_arg(args, unsigned int), hash_flag);
-                while (count < field_width)
-                {
-                    _putchar(' ');
-                    count++;
-                }
                 break;
             case 'o':
                 count += _print_octal(va_arg(args, unsigned int), hash_flag);
-                while (count < field_width)
-                {
-                    _putchar(' ');
-                    count++;
-                }
                 break;
             case 'x':
                 count += _print_hex(va_arg(args, unsigned int), 0, hash_flag);
-                while (count < field_width)
-                {
-                    _putchar(' ');
-                    count++;
-                }
                 break;
             case 'X':
                 count += _print_hex(va_arg(args, unsigned int), 1, hash_flag);
-                while (count < field_width)
-                {
-                    _putchar(' ');
-                    count++;
-                }
-                break;
-            case 'p':
-                count += _print_pointer(va_arg(args, unsigned long int));
-                while (count < field_width)
-                {
-                    _putchar(' ');
-                    count++;
-                }
                 break;
             case 'S':
                 count += _print_S(va_arg(args, char *));
-                while (count < field_width)
-                {
-                    _putchar(' ');
-                    count++;
-                }
                 break;
             }
 
             plus_flag = space_flag = hash_flag = length_l = length_h = field_width = 0;
+            precision = -1;
         }
         else
         {
